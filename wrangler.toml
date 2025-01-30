@@ -1,0 +1,5 @@
+name = "twilight-butterfly-76d6"
+main = "src/worker.js"
+compatibility_date = "2025-01-21"
+workers_dev = true
+preview_urls = false
