@@ -1,4 +1,4 @@
-import { jwtVerify } from 'jose';
+import { jwtVerify, importSPKI } from 'jose';
 
 export default {
 	async fetch(request, env) {
@@ -14,32 +14,47 @@ export default {
 
 			const token = authHeader.split(' ')[1]; // Extract token from "Bearer <token>"
 
-			// Define JWT Validation Parameters
-			const PUBLIC_KEY = env.JWT_PUBLIC_KEY; // Use Cloudflare Worker secrets for security
-			const EXPECTED_ISSUER = 'https://auth-provider.com';
-			const EXPECTED_AUDIENCE = 'wso2-api';
+			// Decode the base64-encoded public key from Cloudflare Secret
+			const publicKeyBase64 = env.JWT_PUBLIC_KEY;
+			const publicKeyPem = new TextDecoder().decode(Uint8Array.from(atob(publicKeyBase64), (c) => c.charCodeAt(0)));
 
-			// Verify the JWT Signature (RS256 or HS256)
-			const { payload } = await jwtVerify(token, PUBLIC_KEY, {
+			// Import the public key for verification
+			const publicKey = await importSPKI(publicKeyPem, 'RS256');
+
+			// Define JWT Validation Parameters
+			const EXPECTED_ISSUER = 'https://localhost:9443/oauth2/token';
+			const EXPECTED_AUDIENCE = '2YHF9qnsHekqWLdyvW2lBLEJYeka';
+
+			// Verify the JWT
+			const { payload } = await jwtVerify(token, publicKey, {
 				issuer: EXPECTED_ISSUER,
 				audience: EXPECTED_AUDIENCE,
 			});
 
-			// Check Token Expiry
-			if (payload.exp * 1000 < Date.now()) {
-				return new Response(JSON.stringify({ error: 'Token has expired' }), {
-					status: 401,
+			// Fetch Data from APIM Endpoint
+			const apimResponse = await fetch('https://your-apim-endpoint.com/resource', {
+				method: 'GET',
+				headers: {
+					Authorization: `Bearer ${token}`, // Forward JWT if needed
+					Accept: 'application/json',
+				},
+			});
+
+			if (!apimResponse.ok) {
+				return new Response(JSON.stringify({ error: 'Failed to fetch APIM data' }), {
+					status: apimResponse.status,
 					headers: { 'Content-Type': 'application/json' },
 				});
 			}
 
-			// Allow Access if JWT is Valid
-			return new Response(JSON.stringify({ message: 'JWT validation successful', user: payload.sub }), {
+			// Parse the APIM response and return it
+			const data = await apimResponse.json();
+			return new Response(JSON.stringify({ message: 'JWT validation successful', data }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' },
 			});
 		} catch (error) {
-			return new Response(JSON.stringify({ error: 'Invalid JWT', details: error.message }), {
+			return new Response(JSON.stringify({ error: 'JWT verification failed', details: error.message }), {
 				status: 401,
 				headers: { 'Content-Type': 'application/json' },
 			});
