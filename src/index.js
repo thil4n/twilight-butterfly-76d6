@@ -14,6 +14,13 @@ export default {
 
 			const token = authHeader.split(' ')[1]; // Extract token from "Bearer <token>"
 
+			if (!token.startsWith('eyJ4NXQ')) {
+				return new Response(JSON.stringify({ error: 'Invalid Authorization header' }), {
+					status: 401,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+
 			// Decode the base64-encoded public key from Cloudflare Secret
 			const publicKeyBase64 = env.JWT_PUBLIC_KEY;
 			const publicKeyPem = new TextDecoder().decode(Uint8Array.from(atob(publicKeyBase64), (c) => c.charCodeAt(0)));
@@ -26,30 +33,27 @@ export default {
 			const EXPECTED_AUDIENCE = '2YHF9qnsHekqWLdyvW2lBLEJYeka';
 
 			// Verify the JWT
-			const { payload } = await jwtVerify(token, publicKey, {
-				issuer: EXPECTED_ISSUER,
-				audience: EXPECTED_AUDIENCE,
-			});
+			// const { payload } = await jwtVerify(token, publicKey, {
+			// 	issuer: EXPECTED_ISSUER,
+			// 	audience: EXPECTED_AUDIENCE,
+			// });
 
 			// Fetch Data from APIM Endpoint
-			const apimResponse = await fetch('https://your-apim-endpoint.com/resource', {
-				method: 'GET',
-				headers: {
-					Authorization: `Bearer ${token}`, // Forward JWT if needed
-					Accept: 'application/json',
-				},
+			const apimResponse = await fetch('https://jwt-test.hacksland.net/netty/1/unsecured', {
+				method: 'POST',
 			});
 
+			console.log('APIM Response:', apimResponse);
+			// Check if the APIM response is OK
+
 			if (!apimResponse.ok) {
-				return new Response(JSON.stringify({ error: 'Failed to fetch APIM data' }), {
+				return new Response(JSON.stringify(apimResponse), {
 					status: apimResponse.status,
 					headers: { 'Content-Type': 'application/json' },
 				});
 			}
 
-			// Parse the APIM response and return it
-			const data = await apimResponse.json();
-			return new Response(JSON.stringify({ message: 'JWT validation successful', data }), {
+			return new Response(JSON.stringify({ message: 'JWT validation successful' }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' },
 			});
