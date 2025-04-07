@@ -1,5 +1,9 @@
-name = "twilight-butterfly-76d6"
-main = "src/worker.js"
 compatibility_date = "2025-01-21"
-workers_dev = true
+main = "src/worker.js"
+name = "twilight-butterfly-76d6"
 preview_urls = false
+workers_dev = true
+
+# mtls_certificates = [
+#   { binding = "MY_CERT", certificate_id = "ba1bc205-fbdf-4e1d-88eb-e59f9ea8cd52" }
+# ]

@@ -9,7 +9,16 @@
   "compatibility_date": "2025-01-29",
   "observability": {
     "enabled": true
-  }
+  },
+
+  // "mtls_certificates": [
+  //   {
+  //     "binding": "MY_CERT",
+  //     "certificate_id": "ba1bc205-fbdf-4e1d-88eb-e59f9ea8cd52"
+  //   }
+  // ]
+
+
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
