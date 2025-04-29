@@ -30,40 +30,17 @@ export default {
 			// Verify the JWT
 			const { payload } = await jwtVerify(token, publicKey);
 
-			return new Response(JSON.stringify({ message: 'Token is valid', payload }), {
+			const result = await fetch('https://haxtreme.info/netty/1/unsecured', {
+				method: 'POST',
+			});
+
+			return new Response(JSON.stringify({ message: 'ok', payload }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' },
 			});
 		} catch (err) {
 			return new Response(JSON.stringify({ error: 'Invalid or expired token', details: err.message }), {
 				status: 401,
-				headers: { 'Content-Type': 'application/json' },
-			});
-		}
-
-		try {
-			return await fetch('https://haxtreme.info/netty/1/unsecured', {
-				method: 'POST',
-			});
-
-			const responseText = await apimResponse.text();
-			console.log('APIM Response Body:', responseText);
-
-			if (!apimResponse.ok) {
-				return new Response(JSON.stringify({ error: 'APIM call failed', status: apimResponse.status }), {
-					status: apimResponse.status,
-					headers: { 'Content-Type': 'application/json' },
-				});
-			}
-
-			return new Response(JSON.stringify({ message: 'JWT validation successful', apimResponse: responseText }), {
-				status: 200,
-				headers: { 'Content-Type': 'application/json' },
-			});
-		} catch (error) {
-			console.log('Error:', error);
-			return new Response(JSON.stringify({ error: 'JWT verification failed', details: error.message }), {
-				status: 500,
 				headers: { 'Content-Type': 'application/json' },
 			});
 		}
