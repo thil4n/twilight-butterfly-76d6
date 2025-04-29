@@ -36,13 +36,19 @@ export default {
 
 		const token = authHeader.split(' ')[1]; // Extract token from "Bearer <token>"
 
-		return new Response(JSON.stringify({ message: 'Token received', token }), {
-			status: 200,
-			headers: { 'Content-Type': 'application/json' },
-		});
+		try {
+			// Import the public key (SPKI format)
+			const publicKey = await importSPKI(PUBLIC_KEY, 'RS256'); // or 'ES256' depending on your algorithm
 
-		if (!token.startsWith('eyJ4NXQ')) {
-			return new Response(JSON.stringify({ error: 'Invalid Authorization header' }), {
+			// Verify the JWT
+			const { payload } = await jwtVerify(token, publicKey);
+
+			return new Response(JSON.stringify({ message: 'Token is valid', payload }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		} catch (err) {
+			return new Response(JSON.stringify({ error: 'Invalid or expired token', details: err.message }), {
 				status: 401,
 				headers: { 'Content-Type': 'application/json' },
 			});
