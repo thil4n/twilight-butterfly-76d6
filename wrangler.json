@@ -11,12 +11,12 @@
     "enabled": true
   },
 
-  // "mtls_certificates": [
-  //   {
-  //     "binding": "MY_CERT",
-  //     "certificate_id": "ba1bc205-fbdf-4e1d-88eb-e59f9ea8cd52"
-  //   }
-  // ]
+  "mtls_certificates": [
+    {
+      "binding": "MY_CERT",
+      "certificate_id": "9827e658-78bd-4598-9189-2a371aac6f6f"
+    }
+  ]
 
 
   /**
