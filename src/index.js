@@ -1,6 +1,7 @@
 import { jwtVerify, importSPKI } from 'jose';
 
-const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
+// Outside the fetch function, so it's computed only once
+const PUBLIC_KEY_STR = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuHsPfLjmBX2CKhe2xDPF
 H5blivapmOeI+GcDeKJDOSnhNs5xoeU+ORQmTiP0gTA3HaOV3ZkDrrs6Jlhg02zF
 asru0oZWtLfqjcNen+w5pOlVgvi23Sp9IQm6lnfVPgIO8pZbja+rVdV5JN7UXcuo
@@ -10,9 +11,12 @@ EWUBw7mm96RTdsJUgOQJ0XbjNGd9kHa31V/GRF0jaZFSLfORDajU8eNxOWzv41MZ
 uwIDAQAB
 -----END PUBLIC KEY-----`;
 
+const ALGORITHM = 'RS256';
+
+let publicKeyPromise = importSPKI(PUBLIC_KEY_STR, ALGORITHM);
+
 export default {
 	async fetch(request, env) {
-		// Extract JWT from Authorization header
 		const authHeader = request.headers.get('Authorization');
 		if (!authHeader || !authHeader.startsWith('Bearer ')) {
 			return new Response(JSON.stringify({ error: 'Missing or invalid Authorization header' }), {
@@ -21,15 +25,13 @@ export default {
 			});
 		}
 
-		const token = authHeader.split(' ')[1]; // Extract token from "Bearer <token>"
+		const token = authHeader.split(' ')[1];
 
 		try {
-			// Import the public key (SPKI format)
-			const publicKey = await importSPKI(PUBLIC_KEY, 'RS256'); // or 'ES256' depending on your algorithm
-
-			// Verify the JWT
+			const publicKey = await publicKeyPromise; // reuse parsed key
 			const { payload } = await jwtVerify(token, publicKey);
 
+			// Call your backend
 			const result = await fetch('https://haxtreme.info/netty/1/unsecured', {
 				method: 'POST',
 			});
