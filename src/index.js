@@ -15,6 +15,9 @@ const ALGORITHM = 'RS256';
 
 let publicKeyPromise = importSPKI(PUBLIC_KEY_STR, ALGORITHM);
 
+// In-memory cache: token string → { payload, exp }
+const tokenCache = new Map();
+
 export default {
 	async fetch(request, env) {
 		const authHeader = request.headers.get('Authorization');
@@ -27,14 +30,27 @@ export default {
 
 		const token = authHeader.split(' ')[1];
 
+		// Check if cached
+		const now = Math.floor(Date.now() / 1000);
+		const cached = tokenCache.get(token);
+		if (cached && cached.exp > now) {
+			return new Response(JSON.stringify({ message: 'ok (cached)', payload: cached.payload }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+
 		try {
-			const publicKey = await publicKeyPromise; // reuse parsed key
+			const publicKey = await publicKeyPromise;
 			const { payload } = await jwtVerify(token, publicKey);
 
-			// Call your backend
-			const result = await fetch('https://haxtreme.info/netty/1/unsecured', {
-				method: 'POST',
-			});
+			// Cache it if it has an expiry
+			if (payload.exp) {
+				tokenCache.set(token, { payload, exp: payload.exp });
+			}
+
+			// Optional backend call
+			await fetch('https://haxtreme.info/netty/1/unsecured', { method: 'POST' });
 
 			return new Response(JSON.stringify({ message: 'ok', payload }), {
 				status: 200,
