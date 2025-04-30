@@ -3,7 +3,3 @@ main = "src/worker.js"
 name = "twilight-butterfly-76d6"
 preview_urls = false
 workers_dev = true
-
-mtls_certificates = [
-  {binding = "MY_CERT", certificate_id = "9827e658-78bd-4598-9189-2a371aac6f6f"},
-]
